@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Mono.Cecil.Cil;
 using TMPro;
@@ -44,6 +45,7 @@ public class GameManager : MonoBehaviour
         }
 
         WordSelectIndex = new List<int>();
+
     }
 
     private void Start() {
@@ -54,12 +56,12 @@ public class GameManager : MonoBehaviour
     private void QuestionSet(){
         gameState = GameState.OnPLay;
 
-        answerWords = questionDataScriptable.questions[currentQuestionIndex].answerInggris;
         questionText.text = questionDataScriptable.questions[currentQuestionIndex].indonesiaKata;
+        answerWords = questionDataScriptable.questions[currentQuestionIndex].answerInggris;
 
         QuestionResets();
-
         WordSelectIndex.Clear();
+
         Array.Clear(charWordArray, 0, charWordArray.Length);
 
         for (int i = 0; i < answerWords.Length; i++)
@@ -93,7 +95,6 @@ public class GameManager : MonoBehaviour
         currentAnswerIndex++;
 
         if(currentAnswerIndex == answerWords.Length){
-
             isAnswer = true;
 
             for (int i = 0; i < answerWords.Length; i++)
@@ -130,6 +131,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
+
     public void QuestionResets(){
         for (int i = 0; i < AnswerPrefabs.Length; i++)
         {
@@ -146,6 +148,41 @@ public class GameManager : MonoBehaviour
         }
         currentAnswerIndex = 0;
     }
+
+    public void hintAnswer(){
+        AnswerPrefabs[currentAnswerIndex].SetChar(char.ToUpper(answerWords[currentAnswerIndex]));
+        currentAnswerIndex++;
+        health--;
+        if(health == 0){
+            gameOverLose.SetActive(true);
+        }
+        if(currentAnswerIndex == answerWords.Length){
+            isAnswer = true;
+            for (int i = 0; i < answerWords.Length; i++)
+            {
+                if(char.ToUpper(answerWords[i]) != char.ToUpper(AnswerPrefabs[i].CharValue)){
+                    isAnswer = false;
+                    break;
+                }
+            }
+
+            if(isAnswer){
+                Debug.Log("Jawaban Benar");
+                gameState = GameState.Next;
+                currentQuestionIndex++;
+
+                if(currentQuestionIndex < questionDataScriptable.questions.Count){
+                    Invoke("QuestionSet", 0.5f);
+                }
+                else{
+                    Debug.Log("Game Selesai");
+                    gameOverWins.SetActive(true);
+                }
+            }
+        }
+            
+    }
+
 
     public void LastWordReset(){
         if(WordSelectIndex.Count > 0){
