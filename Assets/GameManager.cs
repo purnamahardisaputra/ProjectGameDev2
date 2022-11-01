@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using Mono.Cecil.Cil;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 [System.Serializable]
@@ -22,6 +23,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private WordData[] WordPrefabs;
     [SerializeField] private GameObject gameOverWins;
     [SerializeField] private GameObject gameOverLose;
+    [SerializeField] private Player player;
     private char[] charWordArray = new char[12];
     private int currentAnswerIndex = 0;
     private bool isAnswer = true;
@@ -29,7 +31,6 @@ public class GameManager : MonoBehaviour
     private int currentQuestionIndex = 0;
     private GameState gameState = GameState.OnPLay;
     private string answerWords;
-    private int health = 3;
 
     public enum GameState{
         OnPLay,
@@ -52,6 +53,12 @@ public class GameManager : MonoBehaviour
         WordSelectIndex = new List<int>();
         QuestionSet();
     }
+
+    private void Update() {
+        player.UpdateHealth();
+    }
+
+
 
     private void QuestionSet(){
         gameState = GameState.OnPLay;
@@ -93,6 +100,9 @@ public class GameManager : MonoBehaviour
         AnswerPrefabs[currentAnswerIndex].SetChar(wordData.CharValue);
 
         currentAnswerIndex++;
+        if(player.health <= 0){
+            gameOverLose.SetActive(true);
+        }
 
         if(currentAnswerIndex == answerWords.Length){
             isAnswer = true;
@@ -104,8 +114,10 @@ public class GameManager : MonoBehaviour
                     break;
                 }
             }
+            
 
             if(isAnswer){
+                player.health += player.restoreHealth;
                 Debug.Log("Jawaban Benar");
                 gameState = GameState.Next;
                 currentQuestionIndex++;
@@ -116,12 +128,13 @@ public class GameManager : MonoBehaviour
                 else{
                     Debug.Log("Game Selesai");
                     gameOverWins.SetActive(true);
+                    player.AnimateAttack();
                 }
             }
             else if(!isAnswer){
                 Debug.Log("Salah");
-                health--;
-                if(health <= 0){
+                player.TakeDamage();
+                if(player.health <= 0){
                     gameOverLose.SetActive(true);
                 }
                 else{
@@ -150,10 +163,12 @@ public class GameManager : MonoBehaviour
     }
 
     public void hintAnswer(){
+        QuestionResets();
         AnswerPrefabs[currentAnswerIndex].SetChar(char.ToUpper(answerWords[currentAnswerIndex]));
         currentAnswerIndex++;
-        health--;
-        if(health == 0){
+        player.health = player.health - player.attackDamage;
+        if(player.health <= 0){
+            player.health = 0;
             gameOverLose.SetActive(true);
         }
         if(currentAnswerIndex == answerWords.Length){
@@ -177,6 +192,15 @@ public class GameManager : MonoBehaviour
                 else{
                     Debug.Log("Game Selesai");
                     gameOverWins.SetActive(true);
+                }
+            }else if(!isAnswer){
+                Debug.Log("Salah");
+                player.TakeDamage();
+                if(player.health <= 0){
+                    gameOverLose.SetActive(true);
+                }
+                else{
+                    QuestionResets();
                 }
             }
         }

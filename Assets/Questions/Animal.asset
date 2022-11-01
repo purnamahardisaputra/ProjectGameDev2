@@ -13,9 +13,7 @@ MonoBehaviour:
   m_Name: Animal
   m_EditorClassIdentifier: 
   questions:
-  - indonesiaKata: Anjing
-    answerInggris: Dog
   - indonesiaKata: Babi
     answerInggris: Pig
-  - indonesiaKata: Naufal
-    answerInggris: Nopal
+  - indonesiaKata: Kucing
+    answerInggris: Cat
