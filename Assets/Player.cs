@@ -53,6 +53,9 @@ public class Player : MonoBehaviour
     
     public void UpdateHealth(){
         healthText.text = "Health: " + health + "/" + maxHealth;
+        if(health >= 100){
+            health = 100;
+        }
     }
 
 

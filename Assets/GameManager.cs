@@ -9,10 +9,11 @@ using Unity.VisualScripting;
 using UnityEngine;
 
 [System.Serializable]
-    public class QuestionData{
-        public string indonesiaKata;
-        public string answerInggris;
-    }
+public class QuestionData
+{
+    public string indonesiaKata;
+    public string answerInggris;
+}
 
 public class GameManager : MonoBehaviour
 {
@@ -23,7 +24,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private WordData[] WordPrefabs;
     [SerializeField] private GameObject gameOverWins;
     [SerializeField] private GameObject gameOverLose;
-    [SerializeField] private Player player;
+    [SerializeField] private Player player, enemy;
     private char[] charWordArray = new char[12];
     private int currentAnswerIndex = 0;
     private bool isAnswer = true;
@@ -32,16 +33,20 @@ public class GameManager : MonoBehaviour
     private GameState gameState = GameState.OnPLay;
     private string answerWords;
 
-    public enum GameState{
+    public enum GameState
+    {
         OnPLay,
         Next
     }
 
-    private void Awake() {
-        if(instance == null){
+    private void Awake()
+    {
+        if (instance == null)
+        {
             instance = this;
         }
-        else{
+        else
+        {
             Destroy(gameObject);
         }
 
@@ -49,18 +54,22 @@ public class GameManager : MonoBehaviour
 
     }
 
-    private void Start() {
+    private void Start()
+    {
         WordSelectIndex = new List<int>();
         QuestionSet();
     }
 
-    private void Update() {
+    private void Update()
+    {
         player.UpdateHealth();
+        enemy.UpdateHealth();
     }
 
 
 
-    private void QuestionSet(){
+    private void QuestionSet()
+    {
         gameState = GameState.OnPLay;
 
         questionText.text = questionDataScriptable.questions[currentQuestionIndex].indonesiaKata;
@@ -87,11 +96,15 @@ public class GameManager : MonoBehaviour
         {
             WordPrefabs[i].SetChar(charWordArray[i]);
         }
+
+
     }
 
-    public void SelectedOptions(WordData wordData){
+    public void SelectedOptions(WordData wordData)
+    {
 
-        if(gameState == GameState.Next || currentAnswerIndex >= answerWords.Length){
+        if (gameState == GameState.Next || currentAnswerIndex >= answerWords.Length)
+        {
             return;
         }
 
@@ -100,44 +113,57 @@ public class GameManager : MonoBehaviour
         AnswerPrefabs[currentAnswerIndex].SetChar(wordData.CharValue);
 
         currentAnswerIndex++;
-        if(player.health <= 0){
+        if (player.health <= 0)
+        {
             gameOverLose.SetActive(true);
         }
 
-        if(currentAnswerIndex == answerWords.Length){
+        if (currentAnswerIndex == answerWords.Length)
+        {
             isAnswer = true;
 
             for (int i = 0; i < answerWords.Length; i++)
             {
-                if(char.ToUpper(answerWords[i]) != char.ToUpper(AnswerPrefabs[i].CharValue)){
+                if (char.ToUpper(answerWords[i]) != char.ToUpper(AnswerPrefabs[i].CharValue))
+                {
                     isAnswer = false;
                     break;
                 }
             }
-            
 
-            if(isAnswer){
+
+            if (isAnswer)
+            {
                 player.health += player.restoreHealth;
                 Debug.Log("Jawaban Benar");
                 gameState = GameState.Next;
                 currentQuestionIndex++;
 
-                if(currentQuestionIndex < questionDataScriptable.questions.Count){
+                if (currentQuestionIndex < questionDataScriptable.questions.Count)
+                {
                     Invoke("QuestionSet", 0.5f);
                 }
-                else{
+                else
+                {
                     Debug.Log("Game Selesai");
                     gameOverWins.SetActive(true);
+                    enemy.health = 0;
                     player.AnimateAttack();
                 }
             }
-            else if(!isAnswer){
+            else if (!isAnswer)
+            {
+                enemy.health += 5;
                 Debug.Log("Salah");
                 player.TakeDamage();
-                if(player.health <= 0){
+                if (player.health <= 0)
+                {
                     gameOverLose.SetActive(true);
+                    player.health = 0;
+                    enemy.AnimateAttack();
                 }
-                else{
+                else
+                {
                     QuestionResets();
                 }
             }
@@ -145,7 +171,8 @@ public class GameManager : MonoBehaviour
     }
 
 
-    public void QuestionResets(){
+    public void QuestionResets()
+    {
         for (int i = 0; i < AnswerPrefabs.Length; i++)
         {
             AnswerPrefabs[i].gameObject.SetActive(true);
@@ -162,60 +189,86 @@ public class GameManager : MonoBehaviour
         currentAnswerIndex = 0;
     }
 
-    public void hintAnswer(){
-        QuestionResets();
-        AnswerPrefabs[currentAnswerIndex].SetChar(char.ToUpper(answerWords[currentAnswerIndex]));
-        currentAnswerIndex++;
+    public void hintAnswer()
+    {
+
+        if (AnswerPrefabs[currentAnswerIndex].CharValue.Equals('_'))
+        {
+            AnswerPrefabs[currentAnswerIndex].SetChar(char.ToUpper(answerWords[currentAnswerIndex]));
+            currentAnswerIndex++;
+        }
+
         player.health = player.health - player.attackDamage;
-        if(player.health <= 0){
+        if (player.health <= 0)
+        {
             player.health = 0;
             gameOverLose.SetActive(true);
         }
-        if(currentAnswerIndex == answerWords.Length){
+        if (currentAnswerIndex == answerWords.Length)
+        {
             isAnswer = true;
             for (int i = 0; i < answerWords.Length; i++)
             {
-                if(char.ToUpper(answerWords[i]) != char.ToUpper(AnswerPrefabs[i].CharValue)){
+                if (char.ToUpper(answerWords[i]) != char.ToUpper(AnswerPrefabs[i].CharValue))
+                {
                     isAnswer = false;
                     break;
                 }
             }
 
-            if(isAnswer){
+            if (isAnswer)
+            {
                 Debug.Log("Jawaban Benar");
                 gameState = GameState.Next;
                 currentQuestionIndex++;
 
-                if(currentQuestionIndex < questionDataScriptable.questions.Count){
+                if (currentQuestionIndex < questionDataScriptable.questions.Count)
+                {
                     Invoke("QuestionSet", 0.5f);
                 }
-                else{
+                else
+                {
                     Debug.Log("Game Selesai");
                     gameOverWins.SetActive(true);
                 }
-            }else if(!isAnswer){
+            }
+            else if (!isAnswer)
+            {
                 Debug.Log("Salah");
                 player.TakeDamage();
-                if(player.health <= 0){
+                if (player.health <= 0)
+                {
                     gameOverLose.SetActive(true);
+
                 }
-                else{
+                else
+                {
                     QuestionResets();
                 }
             }
         }
-            
+
     }
 
 
-    public void LastWordReset(){
-        if(WordSelectIndex.Count > 0){
-            int index = WordSelectIndex[WordSelectIndex.Count - 1];
-            WordPrefabs[index].gameObject.SetActive(true);
-            WordSelectIndex.RemoveAt(WordSelectIndex.Count - 1);
-            
-            currentAnswerIndex--;
-            AnswerPrefabs[currentAnswerIndex].SetChar('_');
+    public void LastWordReset()
+    {
+        try
+        {
+            if (WordSelectIndex.Count > 0)
+            {
+                int index = WordSelectIndex[WordSelectIndex.Count - 1];
+                WordPrefabs[index].gameObject.SetActive(true);
+                WordSelectIndex.RemoveAt(WordSelectIndex.Count - 1);
+
+                currentAnswerIndex--;
+                AnswerPrefabs[currentAnswerIndex].SetChar('_');
+            }
+        }
+        catch (IndexOutOfRangeException index)
+        {
+            QuestionResets();
+            Debug.Log("index out of range" + index.Message);
         }
     }
 
