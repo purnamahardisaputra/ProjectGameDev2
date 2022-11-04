@@ -21,7 +21,6 @@ public class Player : MonoBehaviour
     public Transform attackPoint;
     public GameObject Enemy;
 
-    GameManager gameManager;
 
     public void AnimateAttack(){
         Vector3 OriginalPosition = transform.position;

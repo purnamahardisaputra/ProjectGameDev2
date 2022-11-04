@@ -7,6 +7,7 @@ using Mono.Cecil.Cil;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 [System.Serializable]
 public class QuestionData
@@ -25,6 +26,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject gameOverWins;
     [SerializeField] private GameObject gameOverLose;
     [SerializeField] private Player player, enemy;
+    [SerializeField] GameObject timerImage;
+    [SerializeField] private float maxTime = 10f;
     private char[] charWordArray = new char[12];
     private int currentAnswerIndex = 0;
     private bool isAnswer = true;
@@ -32,6 +35,8 @@ public class GameManager : MonoBehaviour
     private int currentQuestionIndex = 0;
     private GameState gameState = GameState.OnPLay;
     private string answerWords;
+    private float timeLeft;
+    private bool couritine = false;
 
     public enum GameState
     {
@@ -58,12 +63,30 @@ public class GameManager : MonoBehaviour
     {
         WordSelectIndex = new List<int>();
         QuestionSet();
+        timeLeft = maxTime;
+
     }
 
     private void Update()
     {
         player.UpdateHealth();
         enemy.UpdateHealth();
+        if (timeLeft > 0)
+        {
+            Image timerImage = GameObject.Find("TimerBar").GetComponent<Image>();
+            timeLeft -= Time.deltaTime;
+            timerImage.fillAmount = timeLeft / maxTime;
+            if(timerImage == null)
+                return;
+        }
+        else
+        {
+            gameOverLose.SetActive(true);
+            player.health = 0;
+            if (!couritine)
+                StartCoroutine(attackTimeOutScenes());
+            timerImage.SetActive(false);
+        }
     }
 
 
@@ -96,8 +119,6 @@ public class GameManager : MonoBehaviour
         {
             WordPrefabs[i].SetChar(charWordArray[i]);
         }
-
-
     }
 
     public void SelectedOptions(WordData wordData)
@@ -137,6 +158,7 @@ public class GameManager : MonoBehaviour
                 player.health += player.restoreHealth;
                 Debug.Log("Jawaban Benar");
                 gameState = GameState.Next;
+                timeLeft += 2;
                 currentQuestionIndex++;
 
                 if (currentQuestionIndex < questionDataScriptable.questions.Count)
@@ -149,6 +171,7 @@ public class GameManager : MonoBehaviour
                     gameOverWins.SetActive(true);
                     enemy.health = 0;
                     player.AnimateAttack();
+                    timerImage.SetActive(false);
                 }
             }
             else if (!isAnswer)
@@ -161,6 +184,7 @@ public class GameManager : MonoBehaviour
                     gameOverLose.SetActive(true);
                     player.health = 0;
                     enemy.AnimateAttack();
+                    timerImage.SetActive(false);
                 }
                 else
                 {
@@ -230,6 +254,9 @@ public class GameManager : MonoBehaviour
                 {
                     Debug.Log("Game Selesai");
                     gameOverWins.SetActive(true);
+                    enemy.health = 0;
+                    player.AnimateAttack();
+                    timerImage.SetActive(false);
                 }
             }
             else if (!isAnswer)
@@ -239,7 +266,10 @@ public class GameManager : MonoBehaviour
                 if (player.health <= 0)
                 {
                     gameOverLose.SetActive(true);
-
+                    player.health = 0;
+                    if (!couritine)
+                        StartCoroutine(attackTimeOutScenes());
+                    timerImage.SetActive(false);
                 }
                 else
                 {
@@ -253,23 +283,26 @@ public class GameManager : MonoBehaviour
 
     public void LastWordReset()
     {
-        try
+        if (WordSelectIndex.Count > 0)
         {
-            if (WordSelectIndex.Count > 0)
-            {
-                int index = WordSelectIndex[WordSelectIndex.Count - 1];
-                WordPrefabs[index].gameObject.SetActive(true);
-                WordSelectIndex.RemoveAt(WordSelectIndex.Count - 1);
+            int index = WordSelectIndex[WordSelectIndex.Count - 1];
+            WordPrefabs[index].gameObject.SetActive(true);
+            WordSelectIndex.RemoveAt(WordSelectIndex.Count - 1);
 
-                currentAnswerIndex--;
-                AnswerPrefabs[currentAnswerIndex].SetChar('_');
+            currentAnswerIndex--;
+            if (currentAnswerIndex <= 0)
+            {
+                currentAnswerIndex = 0;
             }
+            AnswerPrefabs[currentAnswerIndex].SetChar('_');
         }
-        catch (IndexOutOfRangeException index)
-        {
-            QuestionResets();
-            Debug.Log("index out of range" + index.Message);
-        }
+    }
+
+    IEnumerator attackTimeOutScenes()
+    {
+        couritine = true;
+        yield return null;
+        enemy.AnimateAttack();
     }
 
 }
