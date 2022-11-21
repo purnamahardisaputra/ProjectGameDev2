@@ -16,8 +16,8 @@ public class Player : MonoBehaviour
     [SerializeField] private TMP_Text healthText; 
     public int health = 75;
     public int maxHealth = 100;
-    public int attackDamage = 25;
-    internal int restoreHealth = 10;
+    [SerializeField] public int attackDamage = 25;
+    public int restoreHealth = 10;
     public Transform attackPoint;
     public GameObject Enemy;
 
@@ -56,6 +56,4 @@ public class Player : MonoBehaviour
             health = 100;
         }
     }
-
-
 }

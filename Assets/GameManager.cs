@@ -1,17 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using Mono.Cecil.Cil;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 [System.Serializable]
 public class QuestionData
 {
+    public Sprite imageQues;
     public string indonesiaKata;
     public string answerInggris;
 }
@@ -21,6 +19,7 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     [SerializeField] private ScriptableAnswer questionDataScriptable;
     [SerializeField] private TMP_Text questionText;
+    [SerializeField] private Image QuesImage;
     [SerializeField] private WordData[] AnswerPrefabs;
     [SerializeField] private WordData[] WordPrefabs;
     [SerializeField] private GameObject gameOverWins;
@@ -73,11 +72,16 @@ public class GameManager : MonoBehaviour
         enemy.UpdateHealth();
         if (timeLeft > 0)
         {
-            Image timerImage = GameObject.Find("TimerBar").GetComponent<Image>();
-            timeLeft -= Time.deltaTime;
-            timerImage.fillAmount = timeLeft / maxTime;
-            if(timerImage == null)
-                return;
+         try
+            {
+                Image timerImage = GameObject.Find("TimerBar").GetComponent<Image>();
+                timeLeft -= Time.deltaTime;
+                timerImage.fillAmount = timeLeft / maxTime;
+            }
+            catch (NullReferenceException)
+            {
+                timerImage.SetActive(false);
+            }
         }
         else
         {
@@ -85,7 +89,7 @@ public class GameManager : MonoBehaviour
             player.health = 0;
             if (!couritine)
                 StartCoroutine(attackTimeOutScenes());
-            timerImage.SetActive(false);
+            // timerImage.SetActive(false);
         }
     }
 
@@ -96,6 +100,7 @@ public class GameManager : MonoBehaviour
         gameState = GameState.OnPLay;
 
         questionText.text = questionDataScriptable.questions[currentQuestionIndex].indonesiaKata;
+        QuesImage.sprite = questionDataScriptable.questions[currentQuestionIndex].imageQues;
         answerWords = questionDataScriptable.questions[currentQuestionIndex].answerInggris;
 
         QuestionResets();
@@ -151,12 +156,12 @@ public class GameManager : MonoBehaviour
                     break;
                 }
             }
-
-
+            // kalau Jawaban Benar
             if (isAnswer)
             {
                 player.health += player.restoreHealth;
                 Debug.Log("Jawaban Benar");
+                enemy.health -= 25;
                 gameState = GameState.Next;
                 timeLeft += 2;
                 currentQuestionIndex++;
@@ -174,9 +179,10 @@ public class GameManager : MonoBehaviour
                     timerImage.SetActive(false);
                 }
             }
+            // kalau Jawaban salah
             else if (!isAnswer)
             {
-                enemy.health += 5;
+                this.enemy.health += this.enemy.restoreHealth;
                 Debug.Log("Salah");
                 player.TakeDamage();
                 if (player.health <= 0)
@@ -239,7 +245,6 @@ public class GameManager : MonoBehaviour
                     break;
                 }
             }
-
             if (isAnswer)
             {
                 Debug.Log("Jawaban Benar");
